@@ -1,13 +1,9 @@
 package main
 
-import (
-	"fmt"
-	"github.com/rabbitmq/amqp091-go"
-)
+import "awesomeProject/internal/app" //"awesomeProject/internal/app" "manga/internal/app"
 
-//"manga/internal/app"
 func main() {
-	fmt.Println("Go RabbitMQ test")
+	/*fmt.Println("Go RabbitMQ test")
 
 	adr := "amqp://guest:guest@localhost:5672/"
 	conn, err := amqp091.Dial(adr)
@@ -58,7 +54,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Massege Publishet to queue")
-	//app.Run()
+	fmt.Println("Massege Publishet to queue")*/
+	app.Run()
 
 }

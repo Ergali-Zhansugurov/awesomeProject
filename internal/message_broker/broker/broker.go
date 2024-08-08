@@ -3,7 +3,7 @@ package broker
 import (
 	"awesomeProject/internal/message_broker/broker_models"
 	"context"
-
+	"fmt"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -21,7 +21,10 @@ func NewBroker(brokers []string, cache *lru.TwoQueueCache, id string) broker_mod
 
 func (b Broker) Connect(ctx context.Context) error {
 	Brokers := []broker_models.SubBroker{b.Chache_Broker}
+
+	fmt.Println("cache broker created")
 	for i, Broker := range Brokers {
+		fmt.Println("brokers ranging to connect")
 		if err := Broker.Connect(ctx, b.broker[i]); err != nil {
 			return err
 		}
