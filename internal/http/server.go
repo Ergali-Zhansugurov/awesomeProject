@@ -36,11 +36,11 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 func (s *Server) basicHandler() chi.Router {
 	r := chi.NewRouter()
 	CategoryResponse := NewCategoryResource(s.store, s.cache, s.broker)
-	r.Mount("/", CategoryResponse.Routes())
+	r.Mount("/categories", CategoryResponse.Routes())
 	TitleResourse := NewTitleResource(s.store, s.cache, s.broker)
-	r.Mount("/", TitleResourse.Routes())
+	r.Mount("/titels", TitleResourse.Routes())
 	UserResourse := NewUserResourse(s.store, s.cache, s.broker)
-	r.Mount("/", UserResourse.Routes())
+	r.Mount("/users", UserResourse.Routes())
 	return r
 }
 func (s *Server) Run() error {

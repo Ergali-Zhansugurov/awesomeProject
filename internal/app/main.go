@@ -33,12 +33,8 @@ func Run() {
 		panic(err)
 	}
 
-	fmt.Println("cache created")
-
 	brokers := []string{"amqp:guest:guest@localhost:5672/"}
 	broker := broker.NewBroker(brokers, cache, "Name")
-
-	fmt.Println("broker created")
 
 	if err := broker.Connect(ctx); err != nil {
 		panic(err)

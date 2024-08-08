@@ -3,7 +3,6 @@ package broker
 import (
 	"awesomeProject/internal/message_broker/broker_models"
 	"context"
-	"fmt"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -15,16 +14,13 @@ type Broker struct {
 }
 
 func NewBroker(brokers []string, cache *lru.TwoQueueCache, id string) broker_models.Broker {
-	broker := Broker{broker: brokers, cache: cache, id: id}
+	broker := Broker{broker: brokers, cache: cache, id: id, Chache_Broker: NewCacheBroker(cache, "10")}
 	return &broker
 }
 
 func (b Broker) Connect(ctx context.Context) error {
 	Brokers := []broker_models.SubBroker{b.Chache_Broker}
-
-	fmt.Println("cache broker created")
 	for i, Broker := range Brokers {
-		fmt.Println("brokers ranging to connect")
 		if err := Broker.Connect(ctx, b.broker[i]); err != nil {
 			return err
 		}

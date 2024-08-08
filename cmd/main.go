@@ -1,6 +1,6 @@
 package main
 
-import "awesomeProject/internal/app" //"awesomeProject/internal/app" "manga/internal/app"
+import "awesomeProject/internal/app"
 
 func main() {
 	/*fmt.Println("Go RabbitMQ test")
@@ -56,5 +56,4 @@ func main() {
 
 	fmt.Println("Massege Publishet to queue")*/
 	app.Run()
-
 }

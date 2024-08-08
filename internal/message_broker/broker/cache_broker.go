@@ -187,7 +187,6 @@ package broker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"awesomeProject/internal/message_broker/broker_models"
@@ -222,22 +221,17 @@ func NewCacheBroker(cache *lru.TwoQueueCache, clientID string) broker_models.Cac
 }
 
 func (c *CacheBroker) Connect(ctx context.Context, amqpURI string) error {
-	fmt.Println("start connecting")
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
 		return err
 	}
 	c.conn = conn
 
-	fmt.Println("Broker url connected")
-
 	channel, err := conn.Channel()
 	if err != nil {
 		return err
 	}
 	c.channel = channel
-
-	fmt.Println("Broker channel created")
 
 	// Declare the exchange and queue
 	err = c.channel.ExchangeDeclare(
