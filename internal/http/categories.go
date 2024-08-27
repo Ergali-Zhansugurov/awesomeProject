@@ -26,9 +26,9 @@ func NewCategoryResource(store store.Store, cache *lru.TwoQueueCache, broker bro
 }
 func (cr CategoryResourse) Routes() chi.Router {
 	r := chi.NewRouter()
-	r.Post("/create", cr.CreateCategory)
-	r.Get("/get", cr.GetCategories)
-	r.Delete("/delete", cr.DeleteCategory)
+	r.Post("/", cr.CreateCategory)
+	r.Get("/", cr.GetCategories)
+	r.Delete("/", cr.DeleteCategory)
 	return r
 }
 func (cr CategoryResourse) CreateCategory(writer http.ResponseWriter, request *http.Request) {
@@ -74,5 +74,5 @@ func (cr CategoryResourse) DeleteCategory(writer http.ResponseWriter, request *h
 		fmt.Fprintf(writer, "Unknow db delete err : %s", err)
 		return
 	}
-	cr.broker.Cache().Remove(id)
+	cr.broker.Cache().Purge()
 }

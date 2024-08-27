@@ -1,13 +1,14 @@
 package store
 
 import (
+	"awesomeProject/internal/config"
 	"awesomeProject/internal/models"
 	"context"
 )
 
 type (
 	Store interface {
-		Connect(urlExample string) error
+		Connect(cfg *config.StorageConfig) error
 		Close() error
 		Title() TitleRepository
 		Category() CategoryRepository

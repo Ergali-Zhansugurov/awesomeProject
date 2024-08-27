@@ -44,12 +44,18 @@ func (s *Server) basicHandler() chi.Router {
 	return r
 }
 func (s *Server) Run() error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello World"))
+	})
+
 	srv := &http.Server{
 		Addr:         s.Addres,
 		Handler:      s.basicHandler(),
 		ReadTimeout:  time.Second * 5,
 		WriteTimeout: time.Second * 30,
 	}
+
 	log.Println("[HTTP] Server runing on", s.Addres)
 
 	return srv.ListenAndServe()

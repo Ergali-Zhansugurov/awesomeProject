@@ -105,6 +105,6 @@ func (tr TitleResourse) DeleteTitle(writer http.ResponseWriter, request *http.Re
 		fmt.Fprintf(writer, "Unknow db delete err : %s", err)
 		return
 	}
-	tr.broker.Cache().Remove(id)
+	tr.broker.Cache().Purge()
 	render.JSON(writer, request, eror)
 }

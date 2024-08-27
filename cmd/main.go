@@ -3,57 +3,75 @@ package main
 import "awesomeProject/internal/app"
 
 func main() {
-	/*fmt.Println("Go RabbitMQ test")
-
-	adr := "amqp://guest:guest@localhost:5672/"
-	conn, err := amqp091.Dial(adr)
+	/*conn, err := amqp091.Dial("amqp://guest:guest@localhost:5672/") // Создаем подключение к RabbitMQ
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		log.Fatalf("unable to open connect to RabbitMQ server. Error: %s", err)
 	}
-	defer conn.Close()
 
-	fmt.Println("Connected to Rabbit by adres ", adr)
+	defer func() {
+		_ = conn.Close() // Закрываем подключение в случае удачной попытки
+	}()
 
 	ch, err := conn.Channel()
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		log.Fatalf("failed to open channel. Error: %s", err)
 	}
-	defer ch.Close()
 
+	defer func() {
+		_ = ch.Close() // Закрываем канал в случае удачной попытки открытия
+	}()
 	q, err := ch.QueueDeclare(
-		"testqueue",
-		false,
-		false,
-		false,
-		false,
-		nil,
+		"hello", // name
+		false,   // durable
+		false,   // delete when unused
+		false,   // exclusive
+		false,   // no-wait
+		nil,     // arguments
 	)
-
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		log.Fatalf("failed to declare a queue. Error: %s", err)
 	}
 
-	fmt.Println(q)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	err = ch.Publish(
-		"",
-		"TestQueue",
-		false,
-		false,
+	body := "Hello World!"
+	err = ch.PublishWithContext(ctx,
+		"",     // exchange
+		q.Name, // routing key
+		false,  // mandatory
+		false,  // immediate
 		amqp091.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte("Hello World"),
-		},
-	)
-
+			Body:        []byte(body),
+		})
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		log.Fatalf("failed to publish a message. Error: %s", err)
 	}
 
-	fmt.Println("Massege Publishet to queue")*/
+	log.Printf(" [x] Sent %s\n", body)
+	messages, err := ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	if err != nil {
+		log.Fatalf("failed to register a consumer. Error: %s", err)
+	}
+
+	var forever chan struct{}
+
+	go func() {
+		for message := range messages {
+			log.Printf("received a message: %s", message.Body)
+		}
+	}()
+
+	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	<-forever*/
 	app.Run()
 }

@@ -1,11 +1,15 @@
 package postgres
 
 import (
+	"awesomeProject/internal/config"
 	"awesomeProject/internal/store"
+	"fmt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
+
+const PG_URL = "postgres://postgres:%v@%v:%v/%v"
 
 type DB struct {
 	conn       *sqlx.DB
@@ -19,8 +23,10 @@ func (db *DB) Close() error {
 	return db.conn.Close()
 }
 
-func (db *DB) Connect(urlExample string) error {
-	conn, err := sqlx.Connect("pgx", urlExample)
+func (db *DB) Connect(cfg *config.StorageConfig) error {
+
+	url := fmt.Sprintf(PG_URL, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
+	conn, err := sqlx.Connect("pgx", url)
 	if err != nil {
 		return err
 	}

@@ -89,6 +89,6 @@ func (Pr PublisherResourse) DeletePublisher(writer http.ResponseWriter, request 
 		fmt.Fprintf(writer, "Unknow db delete err : %s", err)
 		return
 	}
-	Pr.broker.Cache().Remove(id)
+	Pr.broker.Cache().Purge()
 	render.JSON(writer, request, eror)
 }

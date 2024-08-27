@@ -1,6 +1,9 @@
 package broker_models
 
-import "context"
+import (
+	"awesomeProject/internal/config"
+	"context"
+)
 
 type Broker interface {
 	Connect(ctx context.Context) error
@@ -8,12 +11,11 @@ type Broker interface {
 	Cache() CacheBroker
 }
 type SubBroker interface {
-	Connect(ctx context.Context, brokers string) error
+	Connect(ctx context.Context, cfg config.MainConfig) error
 	Close() error
 }
 type CacheBroker interface {
 	SubBroker
 	Add(key interface{}) error
-	Remove(key interface{}) error
 	Purge() error
 }

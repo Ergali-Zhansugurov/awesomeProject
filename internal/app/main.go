@@ -1,6 +1,7 @@
 package app
 
 import (
+	configs "awesomeProject/internal/config"
 	"awesomeProject/internal/http"
 	"awesomeProject/internal/message_broker/broker"
 	"awesomeProject/internal/store/postgres"
@@ -18,10 +19,9 @@ import (
 func Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go CatchTermination(cancel)
-
-	dbURL := "postgres://postgres:Fencing.666@localhost:5432/postgres"
+	cfg := configs.GetConfig()
 	store := postgres.NewDB()
-	if err := store.Connect(dbURL); err != nil {
+	if err := store.Connect(&cfg.Storage); err != nil {
 		panic(err)
 	}
 	defer store.Close()
@@ -33,8 +33,7 @@ func Run() {
 		panic(err)
 	}
 
-	brokers := []string{"amqp:guest:guest@localhost:5672/"}
-	broker := broker.NewBroker(brokers, cache, "Name")
+	broker := broker.NewBroker(cfg.MainConfig, cache, "Name")
 
 	if err := broker.Connect(ctx); err != nil {
 		panic(err)
@@ -45,7 +44,7 @@ func Run() {
 
 	srv := http.NewServer(
 		ctx,
-		http.WithAddress(":8080"),
+		http.WithAddress(cfg.Listen.Port),
 		http.WithStore(store),
 		http.WithCache(cache),
 		http.WithBroker(broker),
