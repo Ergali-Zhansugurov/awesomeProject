@@ -1,0 +1,23 @@
+---
+is_debug: true
+
+listen:
+  type: port
+  bind_ip: localhost
+  port: 8080
+
+storage:
+  host: localhost
+  port: 5432
+  database: postgres
+  username: postgres
+  password: Fencing.666
+
+main_config:
+  rabbitmq_user: guest
+  rabbitmq_pass: guest
+  rabbitmq_ip: localhost
+  rabbitmq_port: 5672
+  rabbitmq_vhost: /
+  rabbitmq_certs_path: /path/to/certs
+  rabbitmq_cert_name: cert.pem
