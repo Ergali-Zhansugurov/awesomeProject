@@ -32,70 +32,18 @@ func MqTlsConfig(certPath string) (*tls.Config, error) {
 	}, nil
 }
 
-func InitConsumer(cfg config.MainConfig, q string) (consumer *rabbitmq.Consumer, err error) {
+func InitConsumer(cfg config.MainConfig, q string) (consumer rabbitmq.Consumer, err error) {
 	url := fmt.Sprintf(MQ_URL, cfg.RabbitmqUser, cfg.RabbitmqPass, cfg.RabbitmqIp, cfg.RabbitmqPort, cfg.Rabbitmqvhost)
-
-	conn, err := rabbitmq.NewConn(url, func(options *rabbitmq.ConnectionOptions) {
-		return
-	})
-	if err != nil {
-
-	}
-	return rabbitmq.NewConsumer(conn, q,
+	return rabbitmq.NewConsumer(url, rabbitmq.Config{},
 		rabbitmq.WithConsumerOptionsLogging,
 	)
 }
 
 func InitProducer(cfg config.MainConfig) (publisher *rabbitmq.Publisher, err error) {
 	url := fmt.Sprintf(MQ_URL, cfg.RabbitmqUser, cfg.RabbitmqPass, cfg.RabbitmqIp, cfg.RabbitmqPort, cfg.Rabbitmqvhost)
-
-	conn, err := rabbitmq.NewConn(url, func(options *rabbitmq.ConnectionOptions) {
-		return
-	})
-
-	if err != nil {
-
-	}
-	return rabbitmq.NewPublisher(conn, rabbitmq.WithPublisherOptionsLogging)
+	return rabbitmq.NewPublisher(url, rabbitmq.Config{})
 }
 
-/*
-	func InitTlsConsumer(cfg config.MainConfig) (consumer *rabbitmq.Consumer, err error) {
-		url := fmt.Sprintf(MQ_URL_SSL, cfg.RabbitmqUser, cfg.RabbitmqPass, cfg.RabbitmqIp, cfg.RabbitmqPort, cfg.Rabbitmqvhost)
-		certPath := cfg.RabbitmqCertsPath + cfg.RabbitmqCertName
-
-		newTlsConfig, err := MqTlsConfig(certPath)
-		if err != nil {
-			return consumer, err
-		}
-		conn, err := rabbitmq.NewConn(url, nil)
-		if err != nil {
-
-		}
-		return rabbitmq.NewConsumer(conn, rabbitmq.Config{
-			TLSClientConfig: newTlsConfig,
-		},
-			rabbitmq.WithConsumerOptionsLogging,
-		)
-	}
-
-	func InitTlsProducer(cfg config.MainConfig) (*rabbitmq.Publisher, error) {
-		url := fmt.Sprintf(MQ_URL_SSL, cfg.RabbitmqUser, cfg.RabbitmqPass, cfg.RabbitmqIp, cfg.RabbitmqPort, cfg.Rabbitmqvhost)
-		certPath := cfg.RabbitmqCertsPath + cfg.RabbitmqCertName
-
-		newTlsConfig, err := MqTlsConfig(certPath)
-		if err != nil {
-			return nil, err
-		}
-		conn, err := rabbitmq.NewConn(url, nil)
-		if err != nil {
-
-		}
-		return rabbitmq.NewPublisher(conn, rabbitmq.Config{
-			TLSClientConfig: newTlsConfig,
-		})
-	}
-*/
 func CreateQueue(cfg config.MainConfig, queueName string) (err error) {
 	url := fmt.Sprintf(MQ_URL, cfg.RabbitmqUser, cfg.RabbitmqPass, cfg.RabbitmqIp, cfg.RabbitmqPort, cfg.Rabbitmqvhost)
 

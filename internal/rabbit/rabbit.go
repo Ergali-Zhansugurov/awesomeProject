@@ -15,22 +15,6 @@ type RabbitMQ struct {
 	Consumer rabbitmq.Consumer
 }
 
-/*
-	type Message struct {
-		DeviceId          string      `json:"device_id"`
-		DeviceCoordinates Coordinates `json:"device_coordinates"`
-		CityCode          string      `json:"city_code"`
-		DevicePlace       string      `json:"device_place"`
-		DeviceWidth       string      `json:"device_width"`
-		RotationUrl       string      `json:"rotation_url"`
-		Widgets           interface{} `json:"widgets"`
-	}
-
-	type Coordinates struct {
-		X float64 `json:"x"`
-		Y float64 `json:"y"`
-	}
-*/
 func InitProducer() (*rabbitmq.Publisher, error) {
 	cfg := configs.GetConfig()
 	//if cfg.AppProfile == "prod" {
@@ -39,7 +23,7 @@ func InitProducer() (*rabbitmq.Publisher, error) {
 	return common_rabbit.InitProducer(cfg.MainConfig)
 }
 
-func InitConsumer(q string) (*rabbitmq.Consumer, error) {
+func InitConsumer(q string) (rabbitmq.Consumer, error) {
 	cfg := configs.GetConfig()
 	//if cfg.AppProfile == "prod" {
 	//  return commonRabbit.InitTlsConsumer(cfg.MainConfig)

@@ -34,7 +34,6 @@ func Run() {
 	}
 
 	broker := broker.NewBroker(cfg.MainConfig, cache, "Name")
-
 	if err := broker.Connect(ctx); err != nil {
 		panic(err)
 	}

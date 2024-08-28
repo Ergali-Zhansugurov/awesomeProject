@@ -15,7 +15,7 @@ type Broker struct {
 }
 
 func NewBroker(cfg config.MainConfig, cache *lru.TwoQueueCache, id string) broker_models.Broker {
-	broker := Broker{configs: cfg, cache: cache, id: id, Chache_Broker: NewCacheBroker(cache, "10")}
+	broker := Broker{configs: cfg, cache: cache, id: id, Chache_Broker: NewRabbitBroker(cache, "10")}
 	return &broker
 }
 
@@ -41,7 +41,7 @@ func (b Broker) Close() error {
 
 func (b *Broker) Cache() broker_models.CacheBroker {
 	if b.Chache_Broker == nil {
-		b.Chache_Broker = NewCacheBroker(b.cache, b.id)
+		b.Chache_Broker = NewRabbitBroker(b.cache, b.id)
 	}
 	return b.Chache_Broker
 }
