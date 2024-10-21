@@ -4,35 +4,95 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"awesomeProject/internal/message_broker/broker_models"
 	"awesomeProject/internal/models"
-	"awesomeProject/internal/store"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	lru "github.com/hashicorp/golang-lru"
 )
 
-type UserResourse struct {
-	store  store.Store
-	broker broker_models.Broker
-	cache  *lru.TwoQueueCache
-}
-
-func NewUserResourse(store store.Store, cache *lru.TwoQueueCache, broker broker_models.Broker) *UserResourse {
-	return &UserResourse{store: store, broker: broker, cache: cache}
-}
-func (Ur UserResourse) Routes() chi.Router {
+func (Ur BaseResource) UserRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", Ur.CreateUser)
-	r.Get("/", Ur.GetUsers)
-	r.Get("/", Ur.GetByid)
 	r.Delete("/", Ur.DeleteUser)
+	r.Post("/users/login", Ur.UserAuthenticate)
+	r.Post("/users/{id}/titles", Ur.UserAddTitleToLibrary)
+	r.Delete("/users/{id}/titles/{titleID}", Ur.UserRemoveTitleFromLibrary)
 	return r
 }
-func (Ur UserResourse) CreateUser(writer http.ResponseWriter, request *http.Request) {
+func (ur *BaseResource) UserAuthenticate(w http.ResponseWriter, r *http.Request) {
+	var login models.LoginID
+	if err := json.NewDecoder(r.Body).Decode(&login); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := ur.store.User().Authenticate(r.Context(), login.Username, login.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Вернуть токен или пользовательские данные
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+}
+
+func (ur *BaseResource) UserAddTitleToLibrary(writer http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	title, err := ur.store.Title().ByID(request.Context(), id)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	useridStr := chi.URLParam(request, "userid")
+	userid, err := strconv.Atoi(useridStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	er := ur.store.User().AddTitleToLibrary(request.Context(), userid, title)
+	if er != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	render.JSON(writer, request, er)
+}
+
+func (ur *BaseResource) UserRemoveTitleFromLibrary(writer http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	useridStr := chi.URLParam(request, "userid")
+	userid, err := strconv.Atoi(useridStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	er := ur.store.User().RemoveTitleFromLibrary(request.Context(), userid, id)
+	if er != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	render.JSON(writer, request, er)
+}
+func (Ur BaseResource) CreateUser(writer http.ResponseWriter, request *http.Request) {
 	User := new(models.User)
 	if err := json.NewDecoder(request.Body).Decode(User); err != nil {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
@@ -46,9 +106,9 @@ func (Ur UserResourse) CreateUser(writer http.ResponseWriter, request *http.Requ
 	}
 	writer.WriteHeader(http.StatusCreated)
 }
-func (Ur UserResourse) GetUsers(writer http.ResponseWriter, request *http.Request) {
+func (Ur BaseResource) GetUsers(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	filter := &models.UserFilter{}
+	filter := &models.Filter{}
 	if searchQuery := queryValues.Get("query"); searchQuery != "" {
 		filter.Query = &searchQuery
 	}
@@ -60,7 +120,7 @@ func (Ur UserResourse) GetUsers(writer http.ResponseWriter, request *http.Reques
 	}
 	render.JSON(writer, request, titles)
 }
-func (Ur UserResourse) GetByid(writer http.ResponseWriter, request *http.Request) {
+func (Ur BaseResource) GetByid(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -76,7 +136,7 @@ func (Ur UserResourse) GetByid(writer http.ResponseWriter, request *http.Request
 	}
 	render.JSON(writer, request, User)
 }
-func (Ur UserResourse) DeleteUser(writer http.ResponseWriter, request *http.Request) {
+func (Ur BaseResource) DeleteUser(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

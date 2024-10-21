@@ -1,9 +1,7 @@
 package http
 
 import (
-	"awesomeProject/internal/message_broker/broker_models"
 	"awesomeProject/internal/models"
-	"awesomeProject/internal/store"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,27 +9,18 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	lru "github.com/hashicorp/golang-lru"
 )
 
-type TitleResourse struct {
-	store  store.Store
-	broker broker_models.Broker
-	cache  *lru.TwoQueueCache
-}
-
-func NewTitleResource(store store.Store, cache *lru.TwoQueueCache, broker broker_models.Broker) *TitleResourse {
-	return &TitleResourse{store: store, broker: broker, cache: cache}
-}
-func (tr TitleResourse) Routes() chi.Router {
+func (tr BaseResource) TitleRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", tr.CreateTitle)
 	r.Get("/", tr.AllTitles)
 	r.Delete("/", tr.DeleteTitle)
-	r.Get("/", tr.GetByid)
+	r.Get("/{id}", tr.GetTitleByid)
+	r.Get("/{categoryid}", tr.GetTitleBycategory_id)
 	return r
 }
-func (tr TitleResourse) CreateTitle(writer http.ResponseWriter, request *http.Request) {
+func (tr BaseResource) CreateTitle(writer http.ResponseWriter, request *http.Request) {
 	title := new(models.Title)
 	if err := json.NewDecoder(request.Body).Decode(title); err != nil {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
@@ -46,13 +35,13 @@ func (tr TitleResourse) CreateTitle(writer http.ResponseWriter, request *http.Re
 	tr.broker.Cache().Purge()
 	writer.WriteHeader(http.StatusCreated)
 }
-func (cr TitleResourse) AllTitles(writer http.ResponseWriter, request *http.Request) {
+func (tr BaseResource) AllTitles(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	filter := &models.Titlesfilter{}
+	filter := &models.Filter{}
 	if searchQuery := queryValues.Get("query"); searchQuery != "" {
 		filter.Query = &searchQuery
 	}
-	titles, err := cr.store.Title().All(request.Context(), filter)
+	titles, err := tr.store.Title().All(request.Context(), filter)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(writer, "DB err : %v", err)
@@ -60,7 +49,7 @@ func (cr TitleResourse) AllTitles(writer http.ResponseWriter, request *http.Requ
 	}
 	render.JSON(writer, request, titles)
 }
-func (tr TitleResourse) GetByid(writer http.ResponseWriter, request *http.Request) {
+func (tr BaseResource) GetTitleByid(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -76,7 +65,7 @@ func (tr TitleResourse) GetByid(writer http.ResponseWriter, request *http.Reques
 	tr.broker.Cache().Add(id)
 	render.JSON(writer, request, title)
 }
-func (tr TitleResourse) GetBycategory_id(writer http.ResponseWriter, request *http.Request) {
+func (tr BaseResource) GetTitleBycategory_id(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -92,7 +81,7 @@ func (tr TitleResourse) GetBycategory_id(writer http.ResponseWriter, request *ht
 	tr.broker.Cache().Add(id)
 	render.JSON(writer, request, title)
 }
-func (tr TitleResourse) DeleteTitle(writer http.ResponseWriter, request *http.Request) {
+func (tr BaseResource) DeleteTitle(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

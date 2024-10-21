@@ -33,22 +33,17 @@ func NewServer(ctx context.Context, opts ...ServerOption) *Server {
 
 	return srv
 }
+
 func (s *Server) basicHandler() chi.Router {
 	r := chi.NewRouter()
-	CategoryResponse := NewCategoryResource(s.store, s.cache, s.broker)
-	r.Mount("/categories", CategoryResponse.Routes())
-	TitleResourse := NewTitleResource(s.store, s.cache, s.broker)
-	r.Mount("/titels", TitleResourse.Routes())
-	UserResourse := NewUserResourse(s.store, s.cache, s.broker)
-	r.Mount("/users", UserResourse.Routes())
+	Baceresourse := NewBaseResource(s.store, s.cache, s.broker)
+	r.Mount("/categories", Baceresourse.CategoryRoutes())
+	r.Mount("/titles", Baceresourse.TitleRoutes())
+	r.Mount("/users", Baceresourse.UserRoutes())
+	r.Mount("/publisher", Baceresourse.PublisherRoutes())
 	return r
 }
 func (s *Server) Run() error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World"))
-	})
-
 	srv := &http.Server{
 		Addr:         s.Addres,
 		Handler:      s.basicHandler(),
@@ -61,13 +56,15 @@ func (s *Server) Run() error {
 	return srv.ListenAndServe()
 }
 
-func (srv *Server) ListenCtxForGt(s *http.Server) {
-	<-srv.ctx.Done()
-	if err := s.Shutdown(context.Background()); err != nil {
+func (s *Server) WaitForGraceFulTarmination() {
+	<-s.idleConnCh
+}
+
+func (s *Server) ListenCtxForGT(srv *http.Server) {
+	<-s.ctx.Done()
+	if err := srv.Shutdown(context.Background()); err != nil {
 		log.Printf("[HTTP] Got err while shutting down %v", err)
 		return
 	}
-}
-func (srv *Server) WaitForGraceFulTarmination() {
-	<-srv.idleConnCh
+	close(s.idleConnCh)
 }

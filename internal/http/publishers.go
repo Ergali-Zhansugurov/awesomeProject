@@ -1,9 +1,7 @@
 package http
 
 import (
-	"awesomeProject/internal/message_broker/broker_models"
 	"awesomeProject/internal/models"
-	"awesomeProject/internal/store"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,27 +9,89 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	lru "github.com/hashicorp/golang-lru"
 )
 
-type PublisherResourse struct {
-	store  store.Store
-	broker broker_models.Broker
-	cache  *lru.TwoQueueCache
-}
-
-func NewPublisherResourse(store store.Store, cache *lru.TwoQueueCache, broker broker_models.Broker) *PublisherResourse {
-	return &PublisherResourse{store: store, broker: broker, cache: cache}
-}
-func (Pr PublisherResourse) Routes() chi.Router {
+func (Pr BaseResource) PublisherRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", Pr.CreatePublisher)
-	r.Get("/", Pr.GetPublishers)
-	r.Get("/", Pr.GetByid)
 	r.Delete("/", Pr.DeletePublisher)
+	r.Post("/users/login", Pr.PublisherAuthenticate)
+	r.Post("/users/{id}/titles", Pr.PublisherAddTitleToLibrary)
+	r.Delete("/users/{id}/titles/{titleID}", Pr.PublisherRemoveTitleFromLibrary)
 	return r
 }
-func (Pr PublisherResourse) CreatePublisher(writer http.ResponseWriter, request *http.Request) {
+func (ur *BaseResource) PublisherAuthenticate(w http.ResponseWriter, r *http.Request) {
+	var login models.LoginID
+	if err := json.NewDecoder(r.Body).Decode(&login); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := ur.store.Publisher().Authenticate(r.Context(), login.Username, login.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Вернуть токен или пользовательские данные
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+}
+
+func (ur *BaseResource) PublisherAddTitleToLibrary(writer http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	title, err := ur.store.Title().ByID(request.Context(), id)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	useridStr := chi.URLParam(request, "userid")
+	userid, err := strconv.Atoi(useridStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	er := ur.store.User().AddTitleToLibrary(request.Context(), userid, title)
+	if er != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	render.JSON(writer, request, er)
+}
+
+func (ur *BaseResource) PublisherRemoveTitleFromLibrary(writer http.ResponseWriter, request *http.Request) {
+	idStr := chi.URLParam(request, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	useridStr := chi.URLParam(request, "userid")
+	userid, err := strconv.Atoi(useridStr)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	er := ur.store.User().RemoveTitleFromLibrary(request.Context(), userid, id)
+	if er != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(writer, "unknow err: %s", err)
+		return
+	}
+	render.JSON(writer, request, er)
+}
+func (Pr BaseResource) CreatePublisher(writer http.ResponseWriter, request *http.Request) {
 	Publisher := new(models.Publisher)
 	if err := json.NewDecoder(request.Body).Decode(Publisher); err != nil {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
@@ -46,21 +106,21 @@ func (Pr PublisherResourse) CreatePublisher(writer http.ResponseWriter, request 
 	Pr.broker.Cache().Purge()
 	writer.WriteHeader(http.StatusCreated)
 }
-func (Pr PublisherResourse) GetPublishers(writer http.ResponseWriter, request *http.Request) {
+func (Pr BaseResource) GetPublishers(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	filter := &models.Publisherfilter{}
+	filter := &models.Filter{}
 	if searchQuery := queryValues.Get("query"); searchQuery != "" {
 		filter.Query = &searchQuery
 	}
-	Publisher, err := Pr.store.Publisher().Get(request.Context(), filter)
+	publisher, err := Pr.store.Publisher().Get(request.Context(), filter)
 	if err != nil {
 		writer.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(writer, "DB err : %v", err)
 		return
 	}
-	render.JSON(writer, request, Publisher)
+	render.JSON(writer, request, publisher)
 }
-func (Pr PublisherResourse) GetByid(writer http.ResponseWriter, request *http.Request) {
+func (Pr BaseResource) GetPublisherByid(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -76,7 +136,7 @@ func (Pr PublisherResourse) GetByid(writer http.ResponseWriter, request *http.Re
 	}
 	render.JSON(writer, request, Publisher)
 }
-func (Pr PublisherResourse) DeletePublisher(writer http.ResponseWriter, request *http.Request) {
+func (Pr BaseResource) DeletePublisher(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

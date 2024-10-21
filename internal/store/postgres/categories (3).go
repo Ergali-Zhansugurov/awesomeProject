@@ -38,7 +38,7 @@ func (c CategoriesRepository) Update(ctx context.Context, category *models.Categ
 	}
 	return nil
 }
-func (c CategoriesRepository) Get(ctx context.Context, filter *models.Categoryesfilter) ([]*models.Category, error) {
+func (c CategoriesRepository) Get(ctx context.Context, filter *models.Filter) ([]*models.Category, error) {
 	basicQuery := "SELECT *FROM categories"
 	searchQuery := ""
 	if filter.Query != nil {

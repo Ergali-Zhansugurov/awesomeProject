@@ -4,8 +4,8 @@ import (
 	"awesomeProject/internal/config"
 	"awesomeProject/internal/logger"
 	"awesomeProject/internal/message_broker/broker_models"
+	"awesomeProject/internal/message_broker/rabbit/common_rabbit"
 	"awesomeProject/internal/models"
-	"awesomeProject/internal/rabbit/common_rabbit"
 	"context"
 	"fmt"
 	lru "github.com/hashicorp/golang-lru"
@@ -29,7 +29,6 @@ type (
 		producer      *rabbitmq.Publisher
 		queue         *amqp091.Queue
 	}
-
 	cacheConsumeHandler struct {
 		cache *lru.TwoQueueCache
 	}
@@ -132,10 +131,10 @@ func RabbitHAndler(d rabbitmq.Delivery) rabbitmq.Action {
 	log.Printf("Consumed message: %s", messageBody)
 	switch models.RabbitCommand(messageBody) {
 	case models.CommandPurge:
-		// Логика для команды PURGE
+		//TODO ; made func
 		return rabbitmq.Ack
 	case models.CommandAdd:
-		// Логика для команды ADD
+		//TODO ; made func
 		return rabbitmq.Ack
 	default:
 		log.Printf("Unknown command: %s", messageBody)

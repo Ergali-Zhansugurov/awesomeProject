@@ -15,3 +15,6 @@ type Msg struct {
 	Command RabbitCommand `json:"command"`
 	Key     interface{}   `json:"key"`
 }
+type Filter struct {
+	Query *string `json:"query"`
+}

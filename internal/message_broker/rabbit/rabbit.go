@@ -3,7 +3,7 @@ package rabbit
 import (
 	configs "awesomeProject/internal/config"
 	"awesomeProject/internal/logger"
-	"awesomeProject/internal/rabbit/common_rabbit"
+	"awesomeProject/internal/message_broker/rabbit/common_rabbit"
 	"fmt"
 	"github.com/wagslane/go-rabbitmq"
 	"gopkg.in/yaml.v3"

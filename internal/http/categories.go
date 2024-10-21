@@ -4,34 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"awesomeProject/internal/message_broker/broker_models"
 	"awesomeProject/internal/models"
-	"awesomeProject/internal/store"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	lru "github.com/hashicorp/golang-lru"
 	"net/http"
 	"strconv"
 )
 
-type CategoryResourse struct {
-	store  store.Store
-	broker broker_models.Broker
-	cache  *lru.TwoQueueCache
-}
-
-func NewCategoryResource(store store.Store, cache *lru.TwoQueueCache, broker broker_models.Broker) *CategoryResourse {
-	return &CategoryResourse{store: store, broker: broker, cache: cache}
-}
-func (cr CategoryResourse) Routes() chi.Router {
+func (cr BaseResource) CategoryRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", cr.CreateCategory)
 	r.Get("/", cr.GetCategories)
 	r.Delete("/", cr.DeleteCategory)
 	return r
 }
-func (cr CategoryResourse) CreateCategory(writer http.ResponseWriter, request *http.Request) {
+func (cr BaseResource) CreateCategory(writer http.ResponseWriter, request *http.Request) {
 	category := new(models.Category)
 	if err := json.NewDecoder(request.Body).Decode(category); err != nil {
 		writer.WriteHeader(http.StatusUnprocessableEntity)
@@ -47,9 +34,9 @@ func (cr CategoryResourse) CreateCategory(writer http.ResponseWriter, request *h
 	cr.broker.Cache().Purge()
 	writer.WriteHeader(http.StatusCreated)
 }
-func (cr CategoryResourse) GetCategories(writer http.ResponseWriter, request *http.Request) {
+func (cr BaseResource) GetCategories(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	filter := &models.Categoryesfilter{}
+	filter := &models.Filter{}
 	if searchQuery := queryValues.Get("query"); searchQuery != "" {
 		filter.Query = &searchQuery
 	}
@@ -61,7 +48,7 @@ func (cr CategoryResourse) GetCategories(writer http.ResponseWriter, request *ht
 	}
 	render.JSON(writer, request, categories)
 }
-func (cr CategoryResourse) DeleteCategory(writer http.ResponseWriter, request *http.Request) {
+func (cr BaseResource) DeleteCategory(writer http.ResponseWriter, request *http.Request) {
 	idStr := chi.URLParam(request, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

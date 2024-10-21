@@ -31,7 +31,25 @@ func NewUsersRepository(conn *sqlx.DB) store.UserRepository {
 	return &UsersRepository{conn: conn}
 }
 
-func (u *UsersRepository) Get(ctx context.Context, filter *models.UserFilter) ([]*models.User, error) {
+func (u *UsersRepository) AddTitleToLibrary(ctx context.Context, userID int, title *models.Title) error {
+	_, err := u.conn.Exec("INSERT INTO user_library (user_id, title_id) VALUES ($1, $2)", userID, title.ID)
+	return err
+}
+func (u *UsersRepository) RemoveTitleFromLibrary(ctx context.Context, userID int, titleID int) error {
+	_, err := u.conn.Exec("DELETE FROM user_library WHERE user_id = $1 AND title_id = $2", userID, titleID)
+	return err
+}
+
+func (u *UsersRepository) Authenticate(ctx context.Context, username, password string) (*models.User, error) {
+	var user models.User
+	err := u.conn.Get(&user, "SELECT id, name FROM users WHERE username = $1 AND password = $2", username, password)
+	if err != nil {
+		return nil, fmt.Errorf("authentication failed: %w", err)
+	}
+	//todo
+	return &user, nil
+}
+func (u *UsersRepository) Get(ctx context.Context, filter *models.Filter) ([]*models.User, error) {
 	basicQuery := "SELECT *FROM Users"
 	searchQuery := ""
 	if filter.Query != nil {
